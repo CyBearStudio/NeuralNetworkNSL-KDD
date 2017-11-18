@@ -1,7 +1,5 @@
-"""K-Means Classifier"""
+"""Default Classifier for Benchmark"""
 import pandas as pd
-from sklearn.preprocessing import minmax_scale
-from sklearn.neural_network import MLPClassifier
 
 COL_NAMES = ["duration", "protocol_type", "service", "flag", "src_bytes",
              "dst_bytes", "land", "wrong_fragment", "urgent", "hot", "num_failed_logins",
@@ -61,31 +59,12 @@ ATTACKS = {
     'xterm': 'U2R'
 }
 
-class NeuralNetworkNSL():
+class DefaultNSL(object):
 
     def __init__(self):
         self.clf = None
         self.training = []
         self.testing = []
-
-    def load_data(self, filepath):
-        data = pd.read_csv(filepath, names=COL_NAMES, index_col=False)
-        # Shuffle data
-        data = data.sample(frac=1).reset_index(drop=True)
-        NOM_IND = [1, 2, 3]
-        BIN_IND = [6, 11, 13, 14, 20, 21]
-        # Need to find the numerical columns for normalization
-        NUM_IND = list(set(range(40)).difference(NOM_IND).difference(BIN_IND))
-        # Convert nominal to category codes
-        for num in NOM_IND:
-            data.iloc[:, num] = data.iloc[:, num].astype('category')
-            data.iloc[:, num] = data.iloc[:, num].cat.codes
-        # Scale all numerical data to [0-1]
-        data.iloc[:, NOM_IND] = minmax_scale(data.iloc[:, NOM_IND])
-        data.iloc[:, NUM_IND] = minmax_scale(data.iloc[:, NUM_IND])
-        labels = data['labels']
-        del data['labels']
-        return [data, labels]
 
     def load_training_data(self, filepath):
         self.training = self.load_data(filepath)
@@ -93,22 +72,18 @@ class NeuralNetworkNSL():
     def load_test_data(self, filepath):
         self.testing = self.load_data(filepath)
 
+    @staticmethod
+    def load_data(filepath):
+        data = pd.read_csv(filepath, names=COL_NAMES, index_col=False)
+        labels = data['labels']
+        del data['labels']
+        return [data, labels]
+
     def train_clf(self):
-        train_data, train_labels = self.training
-        bin_labels = train_labels.apply(lambda x: x if x == 'normal' else 'anomaly')
-        self.clf = MLPClassifier(hidden_layer_sizes=(20,), alpha=.7,
-                                 beta_1=.8, beta_2=.8)
-        self.clf.fit(train_data, bin_labels)
+        pass
 
     def test_clf(self, train=False):
-        if train:
-            data, labels = self.training
-        else:
-            data, labels = self.testing
-        bin_labels = labels.apply(lambda x: x if x == 'normal' else 'anomaly')
-        test_preds = self.clf.predict(data)
-        test_acc = sum(test_preds == bin_labels)/len(test_preds)
-        return [test_preds, test_acc]
+        pass
 
     def evaluate_results(self, ans=None, train=False):
         if not ans:
